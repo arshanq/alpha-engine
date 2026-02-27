@@ -81,7 +81,7 @@ export default function MapView({
         geojson.features.forEach(f => {
             const p = f.properties;
             if (p.state !== selectedState) return;
-            const county = p.county ? p.county.toUpperCase().trim() : 'UNKNOWN';
+            const county = p.county ? p.county.toUpperCase().replace(/ CO\.?$| COUNTY$| PARISH$/g, '').trim() : 'UNKNOWN';
             if (!groups[county]) {
                 groups[county] = { county, totalMW: 0, count: 0, opMW: 0, activeMW: 0, failedMW: 0, projects: [] };
             }
@@ -280,7 +280,7 @@ export default function MapView({
 
         const countyLayer = L.geoJSON(stateCounties, {
             style: (feature) => {
-                const countyName = feature.properties.county ? feature.properties.county.toUpperCase().trim() : '';
+                const countyName = feature.properties.county ? feature.properties.county.toUpperCase().replace(/ CO\.?$| COUNTY$| PARISH$/g, '').trim() : '';
                 const match = countyData[countyName];
                 const mw = match ? match.totalMW : 0;
                 const isSelected = selectedCounty === countyName;
@@ -292,7 +292,7 @@ export default function MapView({
                 };
             },
             onEachFeature: (feature, layer) => {
-                const countyName = feature.properties.county ? feature.properties.county.toUpperCase().trim() : '';
+                const countyName = feature.properties.county ? feature.properties.county.toUpperCase().replace(/ CO\.?$| COUNTY$| PARISH$/g, '').trim() : '';
                 const displayCountyName = feature.properties.county || 'Unknown'; // For the tooltip
                 const match = countyData[countyName];
                 const mw = match ? match.totalMW : 0;
