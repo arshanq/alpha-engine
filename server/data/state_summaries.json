@@ -1,0 +1,355 @@
+{
+  "KY": {
+    "state": "KY",
+    "total_mw": 6261,
+    "total_gw": 6.26,
+    "project_count": 16,
+    "active_count": 4,
+    "operational_mw": 141,
+    "median_queue_days": 1685,
+    "avg_success_probability": 0.11,
+    "top_technology": "Solar",
+    "isos": [
+      "PJM"
+    ]
+  },
+  "PA": {
+    "state": "PA",
+    "total_mw": 3088,
+    "total_gw": 3.09,
+    "project_count": 13,
+    "active_count": 7,
+    "operational_mw": 30,
+    "median_queue_days": 1905,
+    "avg_success_probability": 0.2,
+    "top_technology": "Solar",
+    "isos": [
+      "PJM"
+    ]
+  },
+  "MD": {
+    "state": "MD",
+    "total_mw": 5757,
+    "total_gw": 5.76,
+    "project_count": 15,
+    "active_count": 7,
+    "operational_mw": 325,
+    "median_queue_days": 1569,
+    "avg_success_probability": 0.23,
+    "top_technology": "Solar",
+    "isos": [
+      "PJM"
+    ]
+  },
+  "NJ": {
+    "state": "NJ",
+    "total_mw": 3840,
+    "total_gw": 3.84,
+    "project_count": 12,
+    "active_count": 6,
+    "operational_mw": 40,
+    "median_queue_days": 1954,
+    "avg_success_probability": 0.18,
+    "top_technology": "Solar",
+    "isos": [
+      "PJM"
+    ]
+  },
+  "IL": {
+    "state": "IL",
+    "total_mw": 8550,
+    "total_gw": 8.55,
+    "project_count": 22,
+    "active_count": 12,
+    "operational_mw": 925,
+    "median_queue_days": 1846,
+    "avg_success_probability": 0.25,
+    "top_technology": "Solar",
+    "isos": [
+      "PJM",
+      "MISO"
+    ]
+  },
+  "VA": {
+    "state": "VA",
+    "total_mw": 1160,
+    "total_gw": 1.16,
+    "project_count": 6,
+    "active_count": 5,
+    "operational_mw": 200,
+    "median_queue_days": 1321,
+    "avg_success_probability": 0.34,
+    "top_technology": "Solar",
+    "isos": [
+      "PJM"
+    ]
+  },
+  "DE": {
+    "state": "DE",
+    "total_mw": 6350,
+    "total_gw": 6.35,
+    "project_count": 14,
+    "active_count": 6,
+    "operational_mw": 275,
+    "median_queue_days": 2100,
+    "avg_success_probability": 0.23,
+    "top_technology": "Wind",
+    "isos": [
+      "PJM"
+    ]
+  },
+  "WV": {
+    "state": "WV",
+    "total_mw": 7619,
+    "total_gw": 7.62,
+    "project_count": 15,
+    "active_count": 7,
+    "operational_mw": 100,
+    "median_queue_days": 1082,
+    "avg_success_probability": 0.18,
+    "top_technology": "Battery Storage",
+    "isos": [
+      "PJM"
+    ]
+  },
+  "NC": {
+    "state": "NC",
+    "total_mw": 7023,
+    "total_gw": 7.02,
+    "project_count": 17,
+    "active_count": 7,
+    "operational_mw": 2083,
+    "median_queue_days": 1637,
+    "avg_success_probability": 0.33,
+    "top_technology": "Solar",
+    "isos": [
+      "PJM"
+    ]
+  },
+  "IN": {
+    "state": "IN",
+    "total_mw": 11235,
+    "total_gw": 11.23,
+    "project_count": 26,
+    "active_count": 18,
+    "operational_mw": 1704,
+    "median_queue_days": 1752,
+    "avg_success_probability": 0.26,
+    "top_technology": "Solar",
+    "isos": [
+      "PJM",
+      "MISO"
+    ]
+  },
+  "OH": {
+    "state": "OH",
+    "total_mw": 2439,
+    "total_gw": 2.44,
+    "project_count": 7,
+    "active_count": 6,
+    "operational_mw": 0,
+    "median_queue_days": 1571,
+    "avg_success_probability": 0.12,
+    "top_technology": "Wind",
+    "isos": [
+      "PJM"
+    ]
+  },
+  "IA": {
+    "state": "IA",
+    "total_mw": 2598,
+    "total_gw": 2.6,
+    "project_count": 9,
+    "active_count": 3,
+    "operational_mw": 125,
+    "median_queue_days": 1693,
+    "avg_success_probability": 0.22,
+    "top_technology": "Solar",
+    "isos": [
+      "MISO"
+    ]
+  },
+  "ND": {
+    "state": "ND",
+    "total_mw": 1165,
+    "total_gw": 1.17,
+    "project_count": 9,
+    "active_count": 5,
+    "operational_mw": 175,
+    "median_queue_days": 1510,
+    "avg_success_probability": 0.23,
+    "top_technology": "Battery Storage",
+    "isos": [
+      "MISO"
+    ]
+  },
+  "MS": {
+    "state": "MS",
+    "total_mw": 1378,
+    "total_gw": 1.38,
+    "project_count": 8,
+    "active_count": 4,
+    "operational_mw": 200,
+    "median_queue_days": 1671,
+    "avg_success_probability": 0.25,
+    "top_technology": "Battery Storage",
+    "isos": [
+      "MISO"
+    ]
+  },
+  "LA": {
+    "state": "LA",
+    "total_mw": 2865,
+    "total_gw": 2.87,
+    "project_count": 7,
+    "active_count": 6,
+    "operational_mw": 50,
+    "median_queue_days": 1857,
+    "avg_success_probability": 0.32,
+    "top_technology": "Battery Storage",
+    "isos": [
+      "MISO"
+    ]
+  },
+  "AR": {
+    "state": "AR",
+    "total_mw": 4130,
+    "total_gw": 4.13,
+    "project_count": 12,
+    "active_count": 7,
+    "operational_mw": 0,
+    "median_queue_days": 1976,
+    "avg_success_probability": 0.12,
+    "top_technology": "Solar",
+    "isos": [
+      "MISO"
+    ]
+  },
+  "SD": {
+    "state": "SD",
+    "total_mw": 2618,
+    "total_gw": 2.62,
+    "project_count": 10,
+    "active_count": 5,
+    "operational_mw": 213,
+    "median_queue_days": 1924,
+    "avg_success_probability": 0.4,
+    "top_technology": "Solar",
+    "isos": [
+      "MISO"
+    ]
+  },
+  "MO": {
+    "state": "MO",
+    "total_mw": 415,
+    "total_gw": 0.41,
+    "project_count": 5,
+    "active_count": 1,
+    "operational_mw": 0,
+    "median_queue_days": 966,
+    "avg_success_probability": 0.07,
+    "top_technology": "Solar",
+    "isos": [
+      "MISO"
+    ]
+  },
+  "MN": {
+    "state": "MN",
+    "total_mw": 5285,
+    "total_gw": 5.29,
+    "project_count": 12,
+    "active_count": 8,
+    "operational_mw": 125,
+    "median_queue_days": 2251,
+    "avg_success_probability": 0.21,
+    "top_technology": "Wind",
+    "isos": [
+      "MISO"
+    ]
+  },
+  "MT": {
+    "state": "MT",
+    "total_mw": 962,
+    "total_gw": 0.96,
+    "project_count": 7,
+    "active_count": 7,
+    "operational_mw": 0,
+    "median_queue_days": 1414,
+    "avg_success_probability": 0.25,
+    "top_technology": "Solar",
+    "isos": [
+      "MISO"
+    ]
+  },
+  "TX": {
+    "state": "TX",
+    "total_mw": 38643,
+    "total_gw": 38.64,
+    "project_count": 108,
+    "active_count": 53,
+    "operational_mw": 2285,
+    "median_queue_days": 1725,
+    "avg_success_probability": 0.17,
+    "top_technology": "Solar",
+    "isos": [
+      "ERCOT",
+      "MISO"
+    ]
+  },
+  "WI": {
+    "state": "WI",
+    "total_mw": 3134,
+    "total_gw": 3.13,
+    "project_count": 13,
+    "active_count": 7,
+    "operational_mw": 20,
+    "median_queue_days": 2145,
+    "avg_success_probability": 0.2,
+    "top_technology": "Solar",
+    "isos": [
+      "MISO"
+    ]
+  },
+  "MI": {
+    "state": "MI",
+    "total_mw": 1496,
+    "total_gw": 1.5,
+    "project_count": 7,
+    "active_count": 3,
+    "operational_mw": 0,
+    "median_queue_days": 1620,
+    "avg_success_probability": 0.06,
+    "top_technology": "Wind",
+    "isos": [
+      "MISO"
+    ]
+  },
+  "CA": {
+    "state": "CA",
+    "total_mw": 32026,
+    "total_gw": 32.03,
+    "project_count": 80,
+    "active_count": 46,
+    "operational_mw": 3650,
+    "median_queue_days": 1856,
+    "avg_success_probability": 0.21,
+    "top_technology": "Solar",
+    "isos": [
+      "CAISO"
+    ]
+  },
+  "NY": {
+    "state": "NY",
+    "total_mw": 12190,
+    "total_gw": 12.19,
+    "project_count": 50,
+    "active_count": 21,
+    "operational_mw": 2749,
+    "median_queue_days": 1748,
+    "avg_success_probability": 0.3,
+    "top_technology": "Solar",
+    "isos": [
+      "NYISO"
+    ]
+  }
+}

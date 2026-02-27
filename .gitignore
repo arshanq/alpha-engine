@@ -1,0 +1,22 @@
+node_modules/
+dist/
+.env
+.env.local
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+
+# Database
+server/*.db
+server/*.sqlite
+server/*.sqlite3
+
+# Data files (optional depending on if they want the seed data in repo)
+# Currently keeping data/ intact if it's static, but let's ignore dynamically generated frontend logs
+frontend_log.txt
