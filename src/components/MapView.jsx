@@ -225,7 +225,8 @@ export default function MapView({
                                 <div class="map-tooltip__divider"></div>
                                 <div class="map-tooltip__row"><span class="map-tooltip__label">⚡ Operational</span><span class="map-tooltip__value">${fmtGW(opMW)}</span></div>
                                 <div class="map-tooltip__row"><span class="map-tooltip__label">📊 Success Rate</span><span class="map-tooltip__value">${successRate}${successRate !== '—' ? '%' : ''}</span></div>
-                                <div class="map-tooltip__row"><span class="map-tooltip__label">🔄 Filtered Pipeline</span><span class="map-tooltip__value">${fmtGW(s.totalMW)}</span></div>
+                                <div class="map-tooltip__row"><span class="map-tooltip__label">🔄 Active Pipeline</span><span class="map-tooltip__value">${fmtGW(activeMW)}</span></div>
+                                <div class="map-tooltip__row"><span class="map-tooltip__label">📉 Filtered Total</span><span class="map-tooltip__value">${fmtGW(s.totalMW)}</span></div>
                                 <div class="map-tooltip__divider"></div>
                                 <div class="map-tooltip__row" style="opacity:0.7"><span class="map-tooltip__label">Filtered Projects</span><span class="map-tooltip__value">${s.count}</span></div>
                                 <div class="map-tooltip__row" style="opacity:0.7"><span class="map-tooltip__label">Top Tech (All-Time)</span><span class="map-tooltip__value">${backingSummary.top_technology || '—'}</span></div>
