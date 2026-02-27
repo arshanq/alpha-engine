@@ -81,7 +81,7 @@ export default function MapView({
         geojson.features.forEach(f => {
             const p = f.properties;
             if (p.state !== selectedState) return;
-            const county = p.county || 'Unknown';
+            const county = p.county ? p.county.toUpperCase().trim() : 'UNKNOWN';
             if (!groups[county]) {
                 groups[county] = { county, totalMW: 0, count: 0, opMW: 0, activeMW: 0, failedMW: 0, projects: [] };
             }
@@ -280,7 +280,7 @@ export default function MapView({
 
         const countyLayer = L.geoJSON(stateCounties, {
             style: (feature) => {
-                const countyName = feature.properties.county;
+                const countyName = feature.properties.county ? feature.properties.county.toUpperCase().trim() : '';
                 const match = countyData[countyName];
                 const mw = match ? match.totalMW : 0;
                 const isSelected = selectedCounty === countyName;
@@ -292,15 +292,15 @@ export default function MapView({
                 };
             },
             onEachFeature: (feature, layer) => {
-                const countyName = feature.properties.county;
+                const countyName = feature.properties.county ? feature.properties.county.toUpperCase().trim() : '';
+                const displayCountyName = feature.properties.county || 'Unknown'; // For the tooltip
                 const match = countyData[countyName];
                 const mw = match ? match.totalMW : 0;
                 const count = match ? match.count : 0;
 
                 // Permanent label for large counties
-                if (mw > 100) {
-                    const label = mw >= 1000 ? `${countyName} (${(mw / 1000).toFixed(1)}G)` : `${countyName} (${Math.round(mw)}M)`;
-                    layer.bindTooltip(label, {
+                if (mw > 1000) {
+                    layer.bindTooltip(`${displayCountyName}<br><span style="opacity:0.8">${(mw / 1000).toFixed(1)}GW</span>`, {
                         permanent: true,
                         direction: 'center',
                         className: 'county-label-tooltip',
@@ -322,7 +322,7 @@ export default function MapView({
                         const successRate = match ? match.successRate : '—';
 
                         tip.innerHTML = `
-                            <div class="map-tooltip__title">${countyName} County, ${selectedState}</div>
+                            <div class="map-tooltip__title">${displayCountyName} County, ${selectedState}</div>
                             <div class="map-tooltip__divider"></div>
                             <div class="map-tooltip__row"><span class="map-tooltip__label">⚡ Operational</span><span class="map-tooltip__value">${fmtGW(opMW)}</span></div>
                             <div class="map-tooltip__row"><span class="map-tooltip__label">📊 Success Rate</span><span class="map-tooltip__value">${successRate}${successRate !== '—' ? '%' : ''}</span></div>
