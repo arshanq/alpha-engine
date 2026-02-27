@@ -8,9 +8,19 @@ Alpha Engine ingests interconnection queue data from major U.S. grid operators (
 
 - **Choropleth Map** — 50-state heatmap colored by total pipeline capacity (GW), with state-level drill-down and county-level detail
 - **Investor Metrics** — Operational capacity, historical success rate (MW-weighted), and active pipeline capacity
-- **Filters** — Power type (Solar, Wind, Storage, etc.), ISO provider, and project status
+- **Filters** — Power type (Solar, Wind, Storage, etc.), ISO provider, project status, and queue vintage
 - **Success Scoring** — ML-based probability scoring for active projects based on historical completion patterns
 - **Phantom Detection** — Flags speculative/placeholder projects to filter noise from genuine capacity requests
+
+### 👻 Phantom Load & Filtering
+A key feature of Alpha Engine is identifying **"Phantom Load"**—projects that artificially bloat the queue but have low statistical probability of being built. A project is flagged as Phantom if:
+1. It is currently `Active`
+2. It has been in the queue for **> 2 years** without advancing
+3. Its historical success probability score is `< 20%` (based on its MW size, technology, and region)
+
+By default, the dashboard **hides** phantom load to show the true viable market. You can toggle "Show All (incl. Phantom)" in the sidebar to reveal the raw, unadjusted queue bloat.
+
+Additionally, the **Queue Age (Active)** filter allows investors to explicitly slice the active pipeline by vintage (`< 1 Year`, `1-2 Years`, `2-5 Years`, `> 5 Years`) to identify fresh capacity vs. stagnant requests.
 
 ### Dashboard View (Expanded)
 ![Dashboard Expanded](assets/dashboard_expanded.png)

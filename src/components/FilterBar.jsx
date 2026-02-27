@@ -2,6 +2,7 @@ export default function FilterBar({
     isos, activeISOs, toggleISO,
     technologies, activeTechs, toggleTech,
     statuses, activeStatuses, toggleStatus,
+    ages, activeAges, toggleAge,
     hidePhantom, setHidePhantom,
 }) {
     return (
@@ -50,6 +51,23 @@ export default function FilterBar({
                             onClick={() => toggleISO(iso)}
                         >
                             {iso}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Queue Age Filters */}
+            <div className="filter-section">
+                <div className="filter-section__title">Years in Queue (Active)</div>
+                <div className="filter-bar__row" style={{ display: 'flex', flexWrap: 'nowrap', gap: '4px' }}>
+                    {ages.map((age) => (
+                        <button
+                            key={age}
+                            className={`filter-chip ${activeAges.has(age) ? 'filter-chip--active' : ''}`}
+                            onClick={() => toggleAge(age)}
+                            style={{ flex: 1, padding: '6px 4px', fontSize: '10px', textAlign: 'center', whiteSpace: 'nowrap' }}
+                        >
+                            {age}
                         </button>
                     ))}
                 </div>

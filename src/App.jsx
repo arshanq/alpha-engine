@@ -7,6 +7,7 @@ import ProjectDetail from './components/ProjectDetail';
 const ISOS = ['CAISO', 'MISO', 'SPP', 'ERCOT', 'NYISO', 'ISONE'];
 const TECHNOLOGIES = ['Solar', 'Wind', 'Battery Storage', 'Natural Gas', 'Hybrid', 'Nuclear', 'Hydro', 'Coal', 'Other'];
 const STATUSES = ['Active', 'Operational', 'Withdrawn', 'Suspended'];
+const AGES = ['< 1 Year', '1-2 Years', '2-5 Years', '> 5 Years'];
 
 export default function App() {
     const [allProjects, setAllProjects] = useState(null);
@@ -19,6 +20,7 @@ export default function App() {
     const [activeISOs, setActiveISOs] = useState(new Set(ISOS));
     const [activeTechs, setActiveTechs] = useState(new Set(TECHNOLOGIES));
     const [activeStatuses, setActiveStatuses] = useState(new Set(STATUSES));
+    const [activeAges, setActiveAges] = useState(new Set(AGES));
     const [hidePhantom, setHidePhantom] = useState(false);
 
     // Map / selection state
@@ -66,10 +68,28 @@ export default function App() {
             if (!activeTechs.has(p.technology)) return false;
             if (!activeStatuses.has(p.status)) return false;
             if (hidePhantom && p.is_phantom) return false;
+
+            // Age filter logic
+            const qDays = p.queue_days || 0;
+            if (activeAges.size < AGES.length) {
+                let ageMatch = false;
+                if (activeAges.has('< 1 Year') && qDays <= 365) ageMatch = true;
+                if (activeAges.has('1-2 Years') && qDays > 365 && qDays <= 730) ageMatch = true;
+                if (activeAges.has('2-5 Years') && qDays > 730 && qDays <= 1825) ageMatch = true;
+                if (activeAges.has('> 5 Years') && qDays > 1825) ageMatch = true;
+
+                // If it's withdrawn/operational, we skip age filtering (as they already resolved)
+                if (p.status !== 'Active' && p.status !== 'Suspended') {
+                    ageMatch = true;
+                }
+
+                if (!ageMatch) return false;
+            }
+
             return true;
         });
         return { ...allProjects, features };
-    }, [allProjects, activeISOs, activeTechs, activeStatuses, hidePhantom]);
+    }, [allProjects, activeISOs, activeTechs, activeStatuses, hidePhantom, activeAges]);
 
     // ── Scoped projects: context-aware based on map selection ──
     // Default = all filtered | State selected = that state only | County selected = that county only
@@ -163,6 +183,9 @@ export default function App() {
     const toggleStatus = (status) => {
         setActiveStatuses((prev) => { const n = new Set(prev); n.has(status) ? n.delete(status) : n.add(status); return n; });
     };
+    const toggleAge = (age) => {
+        setActiveAges((prev) => { const n = new Set(prev); n.has(age) ? n.delete(age) : n.add(age); return n; });
+    };
 
     if (loading) {
         return (
@@ -251,17 +274,11 @@ export default function App() {
                     {!filtersCollapsed && (
                         <div className="filter-panel__content">
                             <FilterBar
-                                isos={ISOS}
-                                activeISOs={activeISOs}
-                                toggleISO={toggleISO}
-                                technologies={TECHNOLOGIES}
-                                activeTechs={activeTechs}
-                                toggleTech={toggleTech}
-                                statuses={STATUSES}
-                                activeStatuses={activeStatuses}
-                                toggleStatus={toggleStatus}
-                                hidePhantom={hidePhantom}
-                                setHidePhantom={setHidePhantom}
+                                isos={ISOS} activeISOs={activeISOs} toggleISO={toggleISO}
+                                technologies={TECHNOLOGIES} activeTechs={activeTechs} toggleTech={toggleTech}
+                                statuses={STATUSES} activeStatuses={activeStatuses} toggleStatus={toggleStatus}
+                                ages={AGES} activeAges={activeAges} toggleAge={toggleAge}
+                                hidePhantom={hidePhantom} setHidePhantom={setHidePhantom}
                             />
                         </div>
                     )}
