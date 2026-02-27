@@ -4,13 +4,22 @@ import 'leaflet.markercluster';
 import usStatesGeoData from '../us-states.json';
 
 /* ── Color helpers ── */
-const COLOR_SCALE = [
+const STATE_COLOR_SCALE = [
     { color: '#1e293b', label: '0 GW' },
     { color: '#93c5fd', label: '< 10 GW' },
     { color: '#3b82f6', label: '10–50 GW' },
     { color: '#6366f1', label: '50–150 GW' },
     { color: '#f97316', label: '150–400 GW' },
     { color: '#ef4444', label: '> 400 GW' },
+];
+
+const COUNTY_COLOR_SCALE = [
+    { color: '#1e293b', label: '0 MW' },
+    { color: '#93c5fd', label: '< 100 MW' },
+    { color: '#3b82f6', label: '100–500 MW' },
+    { color: '#6366f1', label: '500–2k MW' },
+    { color: '#f97316', label: '2–5 GW' },
+    { color: '#ef4444', label: '> 5 GW' },
 ];
 
 function getColorForGW(gw) {
@@ -59,6 +68,7 @@ export default function MapView({
     const mapContainer = useRef(null);
     const mapRef = useRef(null);
     const tooltipRef = useRef(null);
+    const legendRef = useRef(null);
     const choroplethRef = useRef(null);
     const countyLayerRef = useRef(null);
 
@@ -127,16 +137,11 @@ export default function MapView({
         mapContainer.current.appendChild(tip);
         tooltipRef.current = tip;
 
-        // Legend
+        // Legend Container
         const legend = document.createElement('div');
         legend.className = 'map-legend';
-        legend.innerHTML = `
-            <div class="map-legend__title">Total Pipeline (GW)</div>
-            <div class="map-legend__scale">
-                ${COLOR_SCALE.map(c => `<div class="map-legend__item"><span class="map-legend__swatch" style="background:${c.color}${c.color === '#1e293b' ? ';border:1px solid #334155' : ''}"></span><span>${c.label}</span></div>`).join('')}
-            </div>
-        `;
         mapContainer.current.appendChild(legend);
+        legendRef.current = legend;
 
         // Viewport tracking
         const updateVP = () => cbRefs.current.onViewportChange?.({ zoom: map.getZoom(), bounds: map.getBounds() });
@@ -245,6 +250,19 @@ export default function MapView({
             mapRef.current = null;
         };
     }, []);
+
+    /* ── Update Legend reactively ── */
+    useEffect(() => {
+        if (!legendRef.current) return;
+        const scale = selectedState ? COUNTY_COLOR_SCALE : STATE_COLOR_SCALE;
+        const title = selectedState ? 'County Pipeline' : 'State Pipeline (GW)';
+        legendRef.current.innerHTML = `
+            <div class="map-legend__title">${title}</div>
+            <div class="map-legend__scale">
+                ${scale.map(c => `<div class="map-legend__item"><span class="map-legend__swatch" style="background:${c.color}${c.color === '#1e293b' ? ';border:1px solid #334155' : ''}"></span><span>${c.label}</span></div>`).join('')}
+            </div>
+        `;
+    }, [selectedState]);
 
     /* ── Update choropleth styles reactively ── */
     useEffect(() => {
