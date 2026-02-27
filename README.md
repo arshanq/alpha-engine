@@ -12,6 +12,12 @@ Alpha Engine ingests interconnection queue data from major U.S. grid operators (
 - **Success Scoring** — ML-based probability scoring for active projects based on historical completion patterns
 - **Phantom Detection** — Flags speculative/placeholder projects to filter noise from genuine capacity requests
 
+### Dashboard View (Expanded)
+![Dashboard Expanded](assets/dashboard_expanded.png)
+
+### Dashboard View (Map Focus)
+![Dashboard Collapsed](assets/dashboard_collapsed.png)
+
 ## Architecture
 
 ```
