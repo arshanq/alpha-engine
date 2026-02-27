@@ -84,6 +84,35 @@ export default function MapView({
     const geojsonRef = useRef(geojson);
     geojsonRef.current = geojson;
 
+    // Group projects by state for the macro view (reacts to filters)
+    const stateData = useMemo(() => {
+        if (!geojson?.features) return {};
+        const groups = {};
+        geojson.features.forEach(f => {
+            const p = f.properties;
+            const state = p.state;
+            if (!state) return;
+            if (!groups[state]) {
+                groups[state] = { totalMW: 0, count: 0, opMW: 0, activeMW: 0, failedMW: 0 };
+            }
+            const mw = p.capacity_mw || 0;
+            groups[state].count += 1;
+            groups[state].totalMW += mw;
+            if (p.status === 'Operational') groups[state].opMW += mw;
+            else if (p.status === 'Active') groups[state].activeMW += mw;
+            else if (['Withdrawn', 'Suspended'].includes(p.status)) groups[state].failedMW += mw;
+        });
+
+        Object.values(groups).forEach(g => {
+            g.successRate = (g.opMW + g.failedMW) > 0 ? ((g.opMW / (g.opMW + g.failedMW)) * 100).toFixed(1) : '—';
+        });
+
+        return groups;
+    }, [geojson]);
+
+    const stateDataRef = useRef(stateData);
+    stateDataRef.current = stateData;
+
     // Group projects by county for selected state
     const countyData = useMemo(() => {
         if (!selectedState || !geojson?.features) return {};
@@ -154,8 +183,8 @@ export default function MapView({
             interactive: true,
             style: (feature) => {
                 const abbr = feature.properties.abbr;
-                const s = stateSummariesRef.current?.[abbr];
-                const gw = s ? s.total_gw : 0;
+                const s = stateDataRef.current?.[abbr];
+                const gw = s ? s.totalMW / 1000 : 0;
                 const isSel = selectedStateRef.current === abbr;
                 return {
                     fillColor: getColorForGW(gw),
@@ -183,28 +212,23 @@ export default function MapView({
                         e.target.bringToFront();
                         const tip = tooltipRef.current;
                         if (!tip) return;
-                        const summary = stateSummariesRef.current?.[abbr];
-                        if (summary) {
-                            // Compute investor metrics from geojson for this state
-                            const geoRef = geojsonRef.current;
-                            const stateProjects = geoRef?.features?.filter(f => f.properties.state === abbr) || [];
-                            const opProjects = stateProjects.filter(f => f.properties.status === 'Operational');
-                            const activeProjects = stateProjects.filter(f => f.properties.status === 'Active');
-                            const failedProjects = stateProjects.filter(f => f.properties.status === 'Withdrawn' || f.properties.status === 'Suspended');
-                            const opMW = opProjects.reduce((s, f) => s + (f.properties.capacity_mw || 0), 0);
-                            const activeMW = activeProjects.reduce((s, f) => s + (f.properties.capacity_mw || 0), 0);
-                            const failedMW = failedProjects.reduce((s, f) => s + (f.properties.capacity_mw || 0), 0);
-                            const successRate = (opMW + failedMW) > 0 ? ((opMW / (opMW + failedMW)) * 100).toFixed(1) : '—';
+                        const s = stateDataRef.current?.[abbr];
+                        if (s) {
+                            // Compute investor metrics from the filtered geojson for this state
+                            const opMW = s.opMW;
+                            const activeMW = s.activeMW;
+                            const successRate = s.successRate;
                             const fmtGW = (mw) => mw >= 1000 ? `${(mw / 1000).toFixed(1)} GW` : `${Math.round(mw)} MW`;
+                            const backingSummary = stateSummariesRef.current?.[abbr] || {};
                             tip.innerHTML = `
                                 <div class="map-tooltip__title">${feature.properties.name} (${abbr})</div>
                                 <div class="map-tooltip__divider"></div>
                                 <div class="map-tooltip__row"><span class="map-tooltip__label">⚡ Operational</span><span class="map-tooltip__value">${fmtGW(opMW)}</span></div>
-                                <div class="map-tooltip__row"><span class="map-tooltip__label">📊 Success Rate</span><span class="map-tooltip__value">${successRate}%</span></div>
-                                <div class="map-tooltip__row"><span class="map-tooltip__label">🔄 Active Pipeline</span><span class="map-tooltip__value">${fmtGW(activeMW)}</span></div>
+                                <div class="map-tooltip__row"><span class="map-tooltip__label">📊 Success Rate</span><span class="map-tooltip__value">${successRate}${successRate !== '—' ? '%' : ''}</span></div>
+                                <div class="map-tooltip__row"><span class="map-tooltip__label">🔄 Filtered Pipeline</span><span class="map-tooltip__value">${fmtGW(s.totalMW)}</span></div>
                                 <div class="map-tooltip__divider"></div>
-                                <div class="map-tooltip__row" style="opacity:0.7"><span class="map-tooltip__label">Projects</span><span class="map-tooltip__value">${summary.project_count}</span></div>
-                                <div class="map-tooltip__row" style="opacity:0.7"><span class="map-tooltip__label">Top Tech</span><span class="map-tooltip__value">${summary.top_technology}</span></div>
+                                <div class="map-tooltip__row" style="opacity:0.7"><span class="map-tooltip__label">Filtered Projects</span><span class="map-tooltip__value">${s.count}</span></div>
+                                <div class="map-tooltip__row" style="opacity:0.7"><span class="map-tooltip__label">Top Tech (All-Time)</span><span class="map-tooltip__value">${backingSummary.top_technology || '—'}</span></div>
                             `;
                         } else {
                             tip.innerHTML = `<div class="map-tooltip__title">${feature.properties.name} (${abbr})</div><div style="font-size:11px;color:#94a3b8;">No projects</div>`;
@@ -269,8 +293,8 @@ export default function MapView({
         if (!choroplethRef.current) return;
         choroplethRef.current.setStyle((feature) => {
             const abbr = feature.properties.abbr;
-            const s = stateSummaries?.[abbr];
-            const gw = s ? s.total_gw : 0;
+            const s = stateData[abbr];
+            const gw = s ? s.totalMW / 1000 : 0;
             const isSel = selectedState === abbr;
             return {
                 fillColor: getColorForGW(gw),
@@ -280,7 +304,7 @@ export default function MapView({
                 fillOpacity: isSel ? 0 : (gw > 0 ? 0.82 : 0),
             };
         });
-    }, [selectedState, stateSummaries]);
+    }, [selectedState, stateData]);
 
     /* ── County polygons ── */
     useEffect(() => {
