@@ -32,10 +32,10 @@ CREATE TABLE IF NOT EXISTS projects (
     latitude REAL,
     longitude REAL,
     success_probability REAL,
-    is_phantom INTEGER DEFAULT 0,
     workforce_total INTEGER,
     workforce_electricians INTEGER,
     construction_years INTEGER,
+    project_url TEXT,
     raw_extra TEXT,
     last_updated TEXT,
     data_source TEXT
@@ -141,7 +141,7 @@ def upsert_project(data: dict):
         "technology", "status", "queue_date", "proposed_cod", "withdrawal_date",
         "actual_cod", "latitude", "longitude", "success_probability", "is_phantom",
         "workforce_total", "workforce_electricians", "construction_years",
-        "last_updated", "data_source",
+        "project_url", "last_updated", "data_source",
     }
 
     extra = {k: v for k, v in data.items() if k not in known_fields and v is not None}
@@ -173,7 +173,7 @@ def upsert_projects_batch(projects: list[dict]):
         "technology", "status", "queue_date", "proposed_cod", "withdrawal_date",
         "actual_cod", "latitude", "longitude", "success_probability", "is_phantom",
         "workforce_total", "workforce_electricians", "construction_years",
-        "last_updated", "data_source", "raw_extra",
+        "project_url", "last_updated", "data_source", "raw_extra",
     }
 
     rows = []

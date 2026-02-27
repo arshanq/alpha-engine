@@ -14,7 +14,7 @@ const COLOR_SCALE = [
 ];
 
 function getColorForGW(gw) {
-    if (!gw || gw <= 0) return '#1e293b';
+    if (!gw || gw <= 0) return 'transparent';
     if (gw > 400) return '#ef4444';
     if (gw > 150) return '#f97316';
     if (gw > 50) return '#6366f1';
@@ -23,6 +23,7 @@ function getColorForGW(gw) {
 }
 
 function getCountyColor(mw) {
+    if (!mw || mw <= 0) return 'transparent';
     if (mw > 5000) return '#ef4444';
     if (mw > 2000) return '#f97316';
     if (mw > 500) return '#6366f1';
@@ -47,6 +48,7 @@ function getCentroid(feature) {
 export default function MapView({
     geojson,
     stateSummaries,
+    countiesGeoJSON,
     onViewportChange,
     onProjectClick,
     onStateSelect,
@@ -81,20 +83,22 @@ export default function MapView({
             if (p.state !== selectedState) return;
             const county = p.county || 'Unknown';
             if (!groups[county]) {
-                groups[county] = { county, totalMW: 0, count: 0, lats: [], lngs: [], projects: [] };
+                groups[county] = { county, totalMW: 0, count: 0, opMW: 0, activeMW: 0, failedMW: 0, projects: [] };
             }
-            groups[county].totalMW += p.capacity_mw || 0;
+            const mw = p.capacity_mw || 0;
+            groups[county].totalMW += mw;
             groups[county].count += 1;
-            const [lng, lat] = f.geometry.coordinates;
-            if (lat && lng) { groups[county].lats.push(lat); groups[county].lngs.push(lng); }
+            if (p.status === 'Operational') groups[county].opMW += mw;
+            else if (p.status === 'Active') groups[county].activeMW += mw;
+            else if (['Withdrawn', 'Suspended'].includes(p.status)) groups[county].failedMW += mw;
+
             groups[county].projects.push(p);
         });
+
         Object.values(groups).forEach(g => {
-            if (g.lats.length) {
-                g.lat = g.lats.reduce((a, b) => a + b, 0) / g.lats.length;
-                g.lng = g.lngs.reduce((a, b) => a + b, 0) / g.lngs.length;
-            }
+            g.successRate = (g.opMW + g.failedMW) > 0 ? ((g.opMW / (g.opMW + g.failedMW)) * 100).toFixed(1) : '—';
         });
+
         return groups;
     }, [selectedState, geojson]);
 
@@ -115,21 +119,6 @@ export default function MapView({
         });
 
         L.control.zoom({ position: 'topleft' }).addTo(map);
-
-        // Reset button
-        const resetCtl = L.control({ position: 'topleft' });
-        resetCtl.onAdd = () => {
-            const div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
-            div.innerHTML = '<a href="#" title="Reset to US" style="font-size:16px;line-height:30px;width:30px;text-align:center;display:block;text-decoration:none;color:#e2e8f0;">🇺🇸</a>';
-            div.onclick = (e) => {
-                e.preventDefault(); e.stopPropagation();
-                map.setView([39.8, -98.5], 4, { animate: true });
-                cbRefs.current.onStateSelect?.(null);
-                cbRefs.current.onCountySelect?.(null);
-            };
-            return div;
-        };
-        resetCtl.addTo(map);
 
         // Tooltip element
         const tip = document.createElement('div');
@@ -166,9 +155,9 @@ export default function MapView({
                 return {
                     fillColor: getColorForGW(gw),
                     weight: isSel ? 3 : 1,
-                    opacity: 1,
-                    color: isSel ? '#38bdf8' : '#334155',
-                    fillOpacity: gw > 0 ? 0.82 : 0.3,
+                    opacity: isSel ? 0 : (gw > 0 ? 1 : 0.4), // Fade out borders of empty states
+                    color: isSel ? 'transparent' : '#334155',
+                    fillOpacity: isSel ? 0 : (gw > 0 ? 0.82 : 0), // Fully transparent if 0 GW
                 };
             },
             onEachFeature: (feature, layer) => {
@@ -250,7 +239,11 @@ export default function MapView({
         const onResize = () => map.invalidateSize();
         window.addEventListener('resize', onResize);
 
-        return () => { window.removeEventListener('resize', onResize); map.remove(); mapRef.current = null; };
+        return () => {
+            window.removeEventListener('resize', onResize);
+            map.remove();
+            mapRef.current = null;
+        };
     }, []);
 
     /* ── Update choropleth styles reactively ── */
@@ -264,97 +257,140 @@ export default function MapView({
             return {
                 fillColor: getColorForGW(gw),
                 weight: isSel ? 3 : 1,
-                opacity: 1,
-                color: isSel ? '#38bdf8' : '#334155',
-                fillOpacity: gw > 0 ? 0.82 : 0.3,
+                opacity: isSel ? 0 : (gw > 0 ? 1 : 0.4),
+                color: isSel ? 'transparent' : '#334155',
+                fillOpacity: isSel ? 0 : (gw > 0 ? 0.82 : 0),
             };
         });
     }, [selectedState, stateSummaries]);
 
-    /* ── County bubbles using circleMarker (SVG-based, no offset!) ── */
+    /* ── County polygons ── */
     useEffect(() => {
         const map = mapRef.current;
         if (!map) return;
 
         if (countyLayerRef.current) { map.removeLayer(countyLayerRef.current); countyLayerRef.current = null; }
-        if (!selectedState || !Object.keys(countyData).length) return;
+        if (!selectedState || !countiesGeoJSON) return;
 
-        const countyGroup = L.layerGroup();
-        const maxCountyMW = Math.max(100, ...Object.values(countyData).map(c => c.totalMW));
+        // Filter counties array for this state
+        const stateCounties = {
+            type: 'FeatureCollection',
+            features: countiesGeoJSON.features.filter(f => f.properties.state_abbr === selectedState)
+        };
 
-        Object.values(countyData).forEach(county => {
-            if (!county.lat || !county.lng) return;
+        const countyLayer = L.geoJSON(stateCounties, {
+            style: (feature) => {
+                const countyName = feature.properties.county;
+                const match = countyData[countyName];
+                const mw = match ? match.totalMW : 0;
+                const isSelected = selectedCounty === countyName;
+                return {
+                    fillColor: getCountyColor(mw),
+                    weight: isSelected ? 3 : (mw > 0 ? 1 : 0), // No border for empty counties
+                    color: isSelected ? '#f8fafc' : 'rgba(255,255,255,0.4)',
+                    fillOpacity: mw > 0 ? 0.85 : 0, // Fully transparent if 0 MW
+                };
+            },
+            onEachFeature: (feature, layer) => {
+                const countyName = feature.properties.county;
+                const match = countyData[countyName];
+                const mw = match ? match.totalMW : 0;
+                const count = match ? match.count : 0;
 
-            const mw = county.totalMW;
-            const isSelected = selectedCounty === county.county;
-            const radiusBase = Math.max(8, Math.min(25, 8 + (mw / maxCountyMW) * 17));
-            const radius = isSelected ? radiusBase + 4 : radiusBase;
-            const color = getCountyColor(mw);
+                // Permanent label for large counties
+                if (mw > 100) {
+                    const label = mw >= 1000 ? `${countyName} (${(mw / 1000).toFixed(1)}G)` : `${countyName} (${Math.round(mw)}M)`;
+                    layer.bindTooltip(label, {
+                        permanent: true,
+                        direction: 'center',
+                        className: 'county-label-tooltip',
+                        interactive: false,
+                    });
+                }
 
-            // Use circleMarker — SVG-based, renders in the same coordinate system as GeoJSON
-            const circle = L.circleMarker([county.lat, county.lng], {
-                radius: radius,
-                fillColor: color,
-                fillOpacity: 0.85,
-                color: isSelected ? '#f1f5f9' : 'rgba(255,255,255,0.4)',
-                weight: isSelected ? 3 : 1.5,
-                interactive: true,
-            });
+                layer.on({
+                    mouseover: (e) => {
+                        const tip = tooltipRef.current;
+                        if (!tip) return;
 
-            // County name label
-            const label = mw >= 1000 ? `${county.county} (${(mw / 1000).toFixed(1)}G)` : `${county.county} (${Math.round(mw)}MW)`;
-            circle.bindTooltip(label, {
-                permanent: true,
-                direction: 'top',
-                offset: [0, -radius - 2],
-                className: 'county-label-tooltip',
-                interactive: false,
-            });
+                        e.target.setStyle({ weight: 2.5, color: '#f8fafc', fillOpacity: 1 });
+                        e.target.bringToFront();
 
-            // Hover detail tooltip
-            circle.on('mouseover', (e) => {
-                const tip = tooltipRef.current;
-                if (!tip) return;
-                const avgSuccess = county.projects.length
-                    ? (county.projects.reduce((s, p) => s + (p.success_probability || 0), 0) / county.projects.length * 100).toFixed(0)
-                    : '—';
-                tip.innerHTML = `
-                    <div class="map-tooltip__title">${county.county} County, ${selectedState}</div>
-                    <div class="map-tooltip__row"><span class="map-tooltip__label">Capacity</span><span class="map-tooltip__value">${mw >= 1000 ? (mw / 1000).toFixed(1) + ' GW' : Math.round(mw) + ' MW'}</span></div>
-                    <div class="map-tooltip__row"><span class="map-tooltip__label">Projects</span><span class="map-tooltip__value">${county.count}</span></div>
-                    <div class="map-tooltip__row"><span class="map-tooltip__label">Avg Success</span><span class="map-tooltip__value">${avgSuccess}%</span></div>
-                `;
-                tip.style.display = 'block';
-                const pt = map.latLngToContainerPoint(e.latlng);
-                tip.style.left = pt.x + 15 + 'px';
-                tip.style.top = pt.y - 10 + 'px';
+                        const fmtGW = (mw) => mw >= 1000 ? `${(mw / 1000).toFixed(1)} GW` : `${Math.round(mw)} MW`;
+                        const opMW = match ? match.opMW : 0;
+                        const activeMW = match ? match.activeMW : 0;
+                        const successRate = match ? match.successRate : '—';
 
-                // Pulse effect
-                circle.setStyle({ fillOpacity: 1, weight: 3, color: '#38bdf8' });
-            });
-
-            circle.on('mouseout', () => {
-                if (tooltipRef.current) tooltipRef.current.style.display = 'none';
-                circle.setStyle({
-                    fillOpacity: 0.85,
-                    weight: isSelected ? 3 : 1.5,
-                    color: isSelected ? '#f1f5f9' : 'rgba(255,255,255,0.4)',
+                        tip.innerHTML = `
+                            <div class="map-tooltip__title">${countyName} County, ${selectedState}</div>
+                            <div class="map-tooltip__divider"></div>
+                            <div class="map-tooltip__row"><span class="map-tooltip__label">⚡ Operational</span><span class="map-tooltip__value">${fmtGW(opMW)}</span></div>
+                            <div class="map-tooltip__row"><span class="map-tooltip__label">📊 Success Rate</span><span class="map-tooltip__value">${successRate}${successRate !== '—' ? '%' : ''}</span></div>
+                            <div class="map-tooltip__row"><span class="map-tooltip__label">🔄 Active Pipeline</span><span class="map-tooltip__value">${fmtGW(activeMW)}</span></div>
+                            <div class="map-tooltip__divider"></div>
+                            <div class="map-tooltip__row" style="opacity:0.7"><span class="map-tooltip__label">Projects</span><span class="map-tooltip__value">${count}</span></div>
+                        `;
+                        tip.style.display = 'block';
+                        const pt = map.latLngToContainerPoint(e.latlng);
+                        tip.style.left = pt.x + 15 + 'px';
+                        tip.style.top = pt.y - 10 + 'px';
+                    },
+                    mouseout: (e) => {
+                        countyLayer.resetStyle(e.target);
+                        if (tooltipRef.current) tooltipRef.current.style.display = 'none';
+                    },
+                    mousemove: (e) => {
+                        const tip = tooltipRef.current;
+                        if (!tip) return;
+                        const pt = map.latLngToContainerPoint(e.latlng);
+                        tip.style.left = pt.x + 15 + 'px';
+                        tip.style.top = pt.y - 10 + 'px';
+                    },
+                    click: (e) => {
+                        L.DomEvent.stopPropagation(e);
+                        cbRefs.current.onCountySelect?.(countyName);
+                    }
                 });
-            });
-
-            circle.on('click', (e) => {
-                L.DomEvent.stopPropagation(e);
-                cbRefs.current.onCountySelect?.(county.county);
-            });
-
-            countyGroup.addLayer(circle);
+            }
         });
 
-        countyGroup.addTo(map);
-        countyLayerRef.current = countyGroup;
+        countyLayer.addTo(map);
+        countyLayerRef.current = countyLayer;
 
         return () => { if (countyLayerRef.current) { map.removeLayer(countyLayerRef.current); countyLayerRef.current = null; } };
-    }, [selectedState, selectedCounty, countyData]);
+    }, [selectedState, selectedCounty, countyData, countiesGeoJSON]);
 
-    return <div ref={mapContainer} style={{ width: '100%', height: '100%', background: '#0f172a', position: 'relative' }} />;
+    return (
+        <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+            <div ref={mapContainer} style={{ width: '100%', height: '100%', background: '#0f172a' }} />
+            <div style={{ position: 'absolute', top: 15, right: 15, zIndex: 1000 }}>
+                <button
+                    onClick={() => {
+                        const map = mapRef.current;
+                        if (map) map.setView([39.8, -98.5], 4, { animate: true });
+                        cbRefs.current.onStateSelect?.(null);
+                        cbRefs.current.onCountySelect?.(null);
+                    }}
+                    style={{
+                        background: 'var(--accent-blue)',
+                        color: 'white',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        padding: '8px 12px',
+                        borderRadius: '6px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.3)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        transition: 'background 0.2s',
+                    }}
+                    onMouseOver={(e) => e.currentTarget.style.background = '#2563eb'}
+                    onMouseOut={(e) => e.currentTarget.style.background = 'var(--accent-blue)'}
+                >
+                    <span style={{ fontSize: 16 }}>🇺🇸</span> Zoom to US
+                </button>
+            </div>
+        </div>
+    );
 }

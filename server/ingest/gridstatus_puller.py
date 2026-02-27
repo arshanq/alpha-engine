@@ -307,6 +307,23 @@ def pull_iso(iso_name: str, verbose: bool = True) -> pd.DataFrame:
     return df
 
 
+import urllib.parse
+
+def generate_project_url(iso_name: str, queue_id: str, project_name: str = None, developer: str = None) -> str:
+    """Generate a targeted Google Search link for a project."""
+    if not queue_id:
+        return ""
+        
+    query = f'"{iso_name.upper()}" "{queue_id}"'
+    if project_name and len(str(project_name)) > 2:
+        query += f' "{project_name}"'
+    elif developer and len(str(developer)) > 2:
+        query += f' "{developer}"'
+        
+    encoded_query = urllib.parse.quote_plus(query)
+    return f"https://www.google.com/search?q={encoded_query}"
+
+
 def dataframe_to_projects(df: pd.DataFrame, iso_name: str) -> list[dict]:
     """Convert a gridstatus DataFrame to our project schema."""
     projects = []
@@ -389,6 +406,12 @@ def dataframe_to_projects(df: pd.DataFrame, iso_name: str) -> list[dict]:
             "actual_cod": safe_date(row.get(col_map.get("actual_cod", ""), None)),
             "latitude": safe_float(row.get(col_map.get("latitude", ""), None)),
             "longitude": safe_float(row.get(col_map.get("longitude", ""), None)),
+            "project_url": generate_project_url(
+                iso_name, 
+                queue_id_raw,
+                safe_str(row.get(col_map.get("project_name", ""), None)),
+                safe_str(row.get(col_map.get("developer", ""), None))
+            ),
             "data_source": "gridstatus",
         }
 

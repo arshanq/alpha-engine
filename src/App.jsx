@@ -11,6 +11,7 @@ const STATUSES = ['Active', 'Operational', 'Withdrawn', 'Suspended'];
 export default function App() {
     const [allProjects, setAllProjects] = useState(null);
     const [stateSummaries, setStateSummaries] = useState(null);
+    const [countiesGeoJSON, setCountiesGeoJSON] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -35,15 +36,18 @@ export default function App() {
     useEffect(() => {
         async function fetchData() {
             try {
-                const [queueRes, summaryRes] = await Promise.all([
+                const [queueRes, summaryRes, countiesRes] = await Promise.all([
                     fetch('/api/queue/geojson'),
                     fetch('/api/queue/summary'),
+                    fetch('/counties.geojson'),
                 ]);
-                if (!queueRes.ok || !summaryRes.ok) throw new Error('API fetch failed');
+                if (!queueRes.ok || !summaryRes.ok || !countiesRes.ok) throw new Error('API fetch failed');
                 const geojson = await queueRes.json();
                 const summaries = await summaryRes.json();
+                const counties = await countiesRes.json();
                 setAllProjects(geojson);
                 setStateSummaries(summaries);
+                setCountiesGeoJSON(counties);
             } catch (err) {
                 setError(err.message);
             } finally {
@@ -267,6 +271,7 @@ export default function App() {
                 <div className="map-container">
                     <MapView
                         geojson={filtered}
+                        countiesGeoJSON={countiesGeoJSON}
                         stateSummaries={stateSummaries}
                         onViewportChange={setViewport}
                         onProjectClick={setSelectedProject}

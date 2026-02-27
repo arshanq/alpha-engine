@@ -310,13 +310,24 @@ export default function Sidebar({
                     </div>
                 ) : (
                     topActive.map((p, idx) => (
-                        <div className="alert-card" key={idx}>
+                        <a
+                            href={p.project_url || '#'}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="alert-card"
+                            key={idx}
+                            style={{ display: 'block', textDecoration: 'none', transition: 'background 0.2s', cursor: 'pointer' }}
+                            onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                            onMouseOut={(e) => e.currentTarget.style.background = 'var(--bg-card)'}
+                            title={`Open ${p.iso} queue registry for ${p.queue_id}`}
+                        >
                             <div className="alert-card__header">
                                 <span className="alert-card__location" style={{ fontSize: 10 }}>
                                     {p.queue_id} — {p.technology}
                                 </span>
-                                <span className="alert-card__mw">
+                                <span className="alert-card__mw" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                                     {fmtGW(p.capacity_mw || 0)}
+                                    <span style={{ fontSize: '10px', opacity: 0.5 }}>↗</span>
                                 </span>
                             </div>
                             <div className="alert-card__body" style={{ fontSize: 9 }}>
@@ -331,7 +342,7 @@ export default function Sidebar({
                                     {((p.success_probability || 0) * 100).toFixed(0)}% likely
                                 </span>
                             </div>
-                        </div>
+                        </a>
                     ))
                 )}
             </div>

@@ -137,6 +137,15 @@ def get_queue_summary():
     return {}
 
 
+@app.get("/api/queue/counties")
+def get_queue_counties():
+    """Return all US counties as GeoJSON for state drill-down map."""
+    counties = load_json("counties_processed.geojson")
+    if counties:
+        return counties
+    return {"type": "FeatureCollection", "features": []}
+
+
 @app.get("/api/ingest/status")
 def ingest_status():
     """Show ingestion status — last pull time per ISO, DB stats."""
